@@ -157,6 +157,7 @@
                     </LinearLayout>
 
                     <Button
+                        android:id="@+id/edit_account_settings_btn"
                         android:layout_width="170dp"
                         android:layout_height="35dp"
                         android:layout_marginStart="10dp"

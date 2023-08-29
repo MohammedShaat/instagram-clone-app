@@ -25,30 +25,28 @@ class MainActivity : AppCompatActivity() {
     private val onItemSelectedListener = NavigationBarView.OnItemSelectedListener { item ->
         when (item.itemId) {
             R.id.nav_home -> {
-                selectedFragment = HomeFragment()
+                moveToFragment(HomeFragment())
+                return@OnItemSelectedListener true
             }
 
             R.id.nav_search -> {
-                selectedFragment = SearchFragment()
+                moveToFragment(SearchFragment())
+                return@OnItemSelectedListener true
             }
 
             R.id.nav_add_post -> {
-                selectedFragment = HomeFragment()
+                return@OnItemSelectedListener true
             }
 
             R.id.nav_notifications -> {
-                selectedFragment = NotificationsFragment()
+                moveToFragment(NotificationsFragment())
+                return@OnItemSelectedListener true
             }
 
             R.id.nav_profile -> {
-                selectedFragment = ProfileFragment()
+                moveToFragment(ProfileFragment())
+                return@OnItemSelectedListener true
             }
-        }
-        if (selectedFragment != null) {
-            supportFragmentManager.beginTransaction().replace(
-                R.id.fragment_container,
-                selectedFragment!!
-            ).commit()
         }
         false
     }
@@ -62,9 +60,13 @@ class MainActivity : AppCompatActivity() {
         val navView: BottomNavigationView = binding.navView
         navView.setOnItemSelectedListener(onItemSelectedListener)
 
+        moveToFragment(HomeFragment())
+    }
+
+    private fun moveToFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction().replace(
             R.id.fragment_container,
-            HomeFragment()
+            fragment
         ).commit()
     }
 }

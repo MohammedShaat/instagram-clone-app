@@ -35,6 +35,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.nav_add_post -> {
+                val intent = Intent(this, AddPostActivity::class.java)
+                startActivity(intent)
                 return@OnItemSelectedListener true
             }
 

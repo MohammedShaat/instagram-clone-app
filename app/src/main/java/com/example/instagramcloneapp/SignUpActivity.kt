@@ -101,7 +101,7 @@ class SignUpActivity : AppCompatActivity() {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     progressDialog.dismiss()
-                    Toast.makeText(this, "Account has been created successfully", Toast.LENGTH_LONG)
+                    Toast.makeText(this, "Account has been created successfully", Toast.LENGTH_LONG).show()
 
                     val intent = Intent(this, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK

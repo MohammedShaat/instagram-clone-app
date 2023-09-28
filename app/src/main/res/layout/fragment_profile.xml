@@ -91,6 +91,7 @@
                             android:orientation="vertical">
 
                             <TextView
+                                android:id="@+id/total_posts"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="0"
@@ -99,7 +100,6 @@
                                 android:textStyle="bold" />
 
                             <TextView
-                                android:id="@+id/total_posts"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Posts"

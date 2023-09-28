@@ -41,6 +41,7 @@
         android:id="@+id/recycler_view_home"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        tools:listitem="@layout/post_item"
         android:layout_below="@id/app_bar_layout_home">
 
     </androidx.recyclerview.widget.RecyclerView>

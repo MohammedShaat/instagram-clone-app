@@ -27,7 +27,7 @@ class UserAdapter(
     private var firebaseUser = FirebaseAuth.getInstance().currentUser
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = UserItemLayoutBinding.inflate(LayoutInflater.from(mContext))
+        val binding = UserItemLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
     }
 

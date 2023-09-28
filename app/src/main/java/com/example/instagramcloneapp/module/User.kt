@@ -1,7 +1,6 @@
 package com.example.instagramcloneapp.module
 
-data
-class User(
+data class User(
     val uid: String = "",
     val fullname: String = "",
     val username: String = "",

@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import com.example.instagramcloneapp.AccountSettingsActivity
 import com.example.instagramcloneapp.R
 import com.example.instagramcloneapp.databinding.FragmentProfileBinding
+import com.example.instagramcloneapp.module.Post
 import com.example.instagramcloneapp.module.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -42,6 +43,7 @@ class ProfileFragment : Fragment() {
         getUserInfo()
         getFollowers()
         getFollowing()
+        getPosts()
 
         val editAccountSettingsBtn = binding.editAccountSettingsBtn
         if (firebaseUser.uid == profileId) {
@@ -199,6 +201,26 @@ class ProfileFragment : Fragment() {
                         Picasso.get().load(user.image).placeholder(R.drawable.profile)
                             .into(proImageProfileFrag)
                     }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+            })
+    }
+
+    private fun getPosts() {
+        val postsRef = FirebaseDatabase.getInstance().reference.child("Posts")
+
+        postsRef.addValueEventListener(
+            object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (!snapshot.exists()) return
+
+                    val count = snapshot.children.count { postSnapshot ->
+                        postSnapshot.getValue(Post::class.java)?.publisher == profileId
+                    }
+                    binding.totalPosts.text = count.toString()
                 }
 
                 override fun onCancelled(error: DatabaseError) {

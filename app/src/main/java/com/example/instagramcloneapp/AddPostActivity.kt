@@ -97,34 +97,34 @@ class AddPostActivity : AppCompatActivity() {
         } ?: return@launch
         Log.i(TAG, "myUri=$myUri")
 
-        val post = hashMapOf<String, String>()
-        post["image"] = myUri!!
-        post["caption"] = binding.captionAddPost.text.toString()
-        post["uid"] = firebaseUser.uid
+        val postsRef = FirebaseDatabase.getInstance().reference.child("Posts")
+        val newPostRef = postsRef.push()
 
-        val postsRef = FirebaseDatabase.getInstance().reference
-            .child("Posts")
-            .push()
-            .setValue(post)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    finish()
-                    Toast.makeText(
-                        applicationContext,
-                        "Your post has been published.",
-                        Toast.LENGTH_SHORT
-                    )
-                        .show()
-                    progressDialog.dismiss()
-                } else {
-                    Toast.makeText(
-                        applicationContext,
-                        "Failed to publish your post. Please try again",
-                        Toast.LENGTH_SHORT
-                    )
-                        .show()
-                    progressDialog.dismiss()
-                }
+        val post = hashMapOf<String, String>()
+        post["id"] = newPostRef.key!!
+        post["image"] = myUri!!
+        post["description"] = binding.captionAddPost.text.toString()
+        post["publisher"] = firebaseUser.uid
+
+        newPostRef.setValue(post).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                finish()
+                Toast.makeText(
+                    applicationContext,
+                    "Your post has been published.",
+                    Toast.LENGTH_SHORT
+                )
+                    .show()
+                progressDialog.dismiss()
+            } else {
+                Toast.makeText(
+                    applicationContext,
+                    "Failed to publish your post. Please try again",
+                    Toast.LENGTH_SHORT
+                )
+                    .show()
+                progressDialog.dismiss()
             }
+        }
     }
 }

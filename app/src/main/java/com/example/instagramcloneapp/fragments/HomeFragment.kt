@@ -67,9 +67,7 @@ class HomeFragment : Fragment() {
                     getPosts()
                 }
 
-                override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
-                }
+                override fun onCancelled(error: DatabaseError) {}
             })
     }
 
@@ -90,9 +88,7 @@ class HomeFragment : Fragment() {
                     postAdapter.notifyDataSetChanged()
                 }
 
-                override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
-                }
+                override fun onCancelled(error: DatabaseError) {}
             })
     }
 }

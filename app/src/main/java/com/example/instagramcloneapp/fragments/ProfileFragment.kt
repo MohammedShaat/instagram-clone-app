@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.instagramcloneapp.AccountSettingsActivity
+import com.example.instagramcloneapp.ShowUsersActivity
 import com.example.instagramcloneapp.R
 import com.example.instagramcloneapp.adapters.MyImageAdapter
 import com.example.instagramcloneapp.databinding.FragmentProfileBinding
@@ -131,6 +132,22 @@ class ProfileFragment : Fragment() {
             }
         }
 
+        binding.followersLinearLayout.setOnClickListener {
+            val intent = Intent(requireContext(), ShowUsersActivity::class.java).apply {
+                putExtra("title", "followers")
+                putExtra("profileId", profileId)
+            }
+            this.startActivity(intent)
+        }
+
+        binding.followingLinearLayout.setOnClickListener {
+            val intent = Intent(requireContext(), ShowUsersActivity::class.java).apply {
+                putExtra("title", "following")
+                putExtra("profileId", profileId)
+            }
+            this.startActivity(intent)
+        }
+
         return binding.root
     }
 
@@ -164,31 +181,36 @@ class ProfileFragment : Fragment() {
 
     private fun followOrUnFollow(editAccountSettingsBtn: Button) {
         if (editAccountSettingsBtn.text.toString() == "Follow") {
-            firebaseUser.uid.let { currentUid ->
-                FirebaseDatabase.getInstance().reference
-                    .child("Follow")
-                    .child(currentUid)
-                    .child("Following")
-                    .child(profileId)
-                    .setValue(true)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            firebaseUser.uid.let { currentUid ->
-                                FirebaseDatabase.getInstance().reference
-                                    .child("Follow")
-                                    .child(profileId)
-                                    .child("Followers")
-                                    .child(currentUid)
-                                    .setValue(true)
-                                    .addOnCompleteListener { task ->
-                                        if (task.isSuccessful) {
-                                        }
-                                    }
+            FirebaseDatabase.getInstance().reference
+                .child("Follow")
+                .child(firebaseUser.uid)
+                .child("Following")
+                .child(profileId)
+                .setValue(true)
 
-                            }
+                .addOnSuccessListener {
+                    FirebaseDatabase.getInstance().reference
+                        .child("Follow")
+                        .child(profileId)
+                        .child("Followers")
+                        .child(firebaseUser.uid)
+                        .setValue(true)
+
+                        .addOnSuccessListener {
+                            val notificationRef = FirebaseDatabase.getInstance().reference
+                                .child("Notifications")
+                                .child(profileId)
+                                .push()
+                            val notificationMap = hashMapOf<String, Any?>()
+                            notificationMap["id"] = notificationRef.key!!
+                            notificationMap["text"] = "followed you"
+                            notificationMap["post_id"] = "null"
+                            notificationMap["user_id"] = firebaseUser.uid
+                            notificationMap["is_post"] = false
+
+                            notificationRef.setValue(notificationMap)
                         }
-                    }
-            }
+                }
         } else {
             firebaseUser.uid.let { currentUid ->
                 FirebaseDatabase.getInstance().reference
@@ -197,21 +219,14 @@ class ProfileFragment : Fragment() {
                     .child("Following")
                     .child(profileId)
                     .removeValue()
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            firebaseUser.uid.let { currentUid ->
-                                FirebaseDatabase.getInstance().reference
-                                    .child("Follow")
-                                    .child(profileId)
-                                    .child("Followers")
-                                    .child(currentUid)
-                                    .removeValue()
-                                    .addOnCompleteListener { task ->
-                                        if (task.isSuccessful) {
-                                        }
-                                    }
-
-                            }
+                    .addOnSuccessListener {
+                        firebaseUser.uid.let { currentUid ->
+                            FirebaseDatabase.getInstance().reference
+                                .child("Follow")
+                                .child(profileId)
+                                .child("Followers")
+                                .child(currentUid)
+                                .removeValue()
                         }
                     }
             }
@@ -299,7 +314,7 @@ class ProfileFragment : Fragment() {
                 myPostList.clear()
                 snapshot.children.forEach { postSnapshot ->
                     val post = postSnapshot.getValue<Post>() ?: return
-                    if (post.publisher == firebaseUser.uid)
+                    if (post.publisher == profileId)
                         myPostList.add(post)
                 }
                 myPostList.reverse()
@@ -313,7 +328,7 @@ class ProfileFragment : Fragment() {
     private fun getSavedPostsIds() {
         val userRef = FirebaseDatabase.getInstance().reference
             .child("Saved_Posts")
-            .child(firebaseUser.uid)
+            .child(profileId)
 
         userRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {

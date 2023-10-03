@@ -2,11 +2,13 @@ package com.example.instagramcloneapp.adapters
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.instagramcloneapp.CommentsActivity
+import com.example.instagramcloneapp.ShowUsersActivity
 import com.example.instagramcloneapp.R
 import com.example.instagramcloneapp.databinding.PostItemBinding
 import com.example.instagramcloneapp.module.Post
@@ -54,25 +56,14 @@ class PostAdapter(
                 getNumberOfComments(post.id)
 
                 postImageLikeBtn.setOnClickListener {
-                    if (postImageLikeBtn.tag == "Like") {
-                        FirebaseDatabase.getInstance().reference
-                            .child("Likes")
-                            .child(post.id)
-                            .child(firebaseUser.uid)
-                            .setValue(true)
-                    } else {
-                        FirebaseDatabase.getInstance().reference
-                            .child("Likes")
-                            .child(post.id)
-                            .child(firebaseUser.uid)
-                            .removeValue()
-                    }
+                    likeOrUnLike(post.id, post.publisher)
                 }
 
                 postImageCommentBtn.setOnClickListener {
                     val intent = Intent(mContext, CommentsActivity::class.java).apply {
                         putExtra("postId", post.id)
                         putExtra("uid", firebaseUser.uid)
+                        putExtra("publisherId", post.publisher)
                     }
                     mContext.startActivity(intent)
                 }
@@ -81,13 +72,53 @@ class PostAdapter(
                     val intent = Intent(mContext, CommentsActivity::class.java).apply {
                         putExtra("postId", post.id)
                         putExtra("uid", firebaseUser.uid)
+                        putExtra("publisherId", post.publisher)
                     }
                     mContext.startActivity(intent)
                 }
 
                 postSaveCommentBtn.setOnClickListener {
-                    savePost(post.id)
+                    savePost(post.id, post.publisher)
                 }
+
+                likes.setOnClickListener {
+                    if (likes.text.toString() == "Be the first to like")
+                        return@setOnClickListener
+
+                    val intent = Intent(mContext, ShowUsersActivity::class.java).apply {
+                        putExtra("title", "likes")
+                        putExtra("postId", post.id)
+                    }
+                    mContext.startActivity(intent)
+                }
+            }
+        }
+
+        private fun likeOrUnLike(postId: String, publisherId: String) {
+            val likesUserRef = FirebaseDatabase.getInstance().reference
+                .child("Likes")
+                .child(postId)
+                .child(firebaseUser.uid)
+
+            val notificationRef = FirebaseDatabase.getInstance().reference
+                .child("Notifications")
+                .child(publisherId)
+                .push()
+
+            if (binding.postImageLikeBtn.tag == "Like") {
+                likesUserRef.setValue(true)
+                    .addOnCompleteListener {
+                        val notificationMap = hashMapOf<String, Any>()
+                        notificationMap["id"] = notificationRef.key!!
+                        notificationMap["text"] = "liked your post"
+                        notificationMap["post_id"] = postId
+                        notificationMap["user_id"] = firebaseUser.uid
+                        notificationMap["is_post"] = true
+
+                        notificationRef.setValue(notificationMap)
+                    }
+            } else {
+                likesUserRef.removeValue()
             }
         }
 
@@ -166,14 +197,32 @@ class PostAdapter(
             })
         }
 
-        private fun savePost(id: String) {
+        private fun savePost(postId: String, publisherId: String) {
             val postRef = FirebaseDatabase.getInstance().reference
                 .child("Saved_Posts")
                 .child(firebaseUser.uid)
-                .child(id)
+                .child(postId)
+
+            val notificationRef = FirebaseDatabase.getInstance().reference
+                .child("Notifications")
+                .child(publisherId)
+                .push()
 
             if (binding.postSaveCommentBtn.tag == "save") {
                 postRef.setValue(true)
+                    .addOnSuccessListener {
+                        val notificationRef = FirebaseDatabase.getInstance().reference
+                            .child("Notifications")
+                            .child(publisherId)
+                            .push()
+                        val notificationMap = hashMapOf<String, Any?>()
+                        notificationMap["id"] = notificationRef.key!!
+                        notificationMap["text"] = "saved your post"
+                        notificationMap["post_id"] = postId
+                        notificationMap["user_id"] = firebaseUser.uid
+                        notificationMap["is_post"] = true
+                        notificationRef.setValue(notificationMap)
+                    }
             } else {
                 postRef.removeValue()
             }

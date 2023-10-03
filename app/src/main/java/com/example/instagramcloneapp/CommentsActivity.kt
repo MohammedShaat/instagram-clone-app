@@ -20,6 +20,7 @@ class CommentsActivity : AppCompatActivity() {
 
     private lateinit var postId: String
     private lateinit var uid: String
+    private lateinit var publisherId: String
 
     private val commentList: MutableList<Comment> = mutableListOf()
     private lateinit var commentAdapter: CommentAdapter
@@ -32,6 +33,7 @@ class CommentsActivity : AppCompatActivity() {
 
         postId = requireNotNull(intent.getStringExtra("postId"))
         uid = requireNotNull(intent.getStringExtra("uid"))
+        publisherId = requireNotNull(intent.getStringExtra("publisherId"))
         commentAdapter = CommentAdapter(applicationContext, commentList)
 
         binding.recyclerViewComments.apply {
@@ -126,24 +128,37 @@ class CommentsActivity : AppCompatActivity() {
         commentInfo["commenterId"] = uid
         commentInfo["comment"] = commentTextView.text.toString()
 
-        commentRef.setValue(commentInfo).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                progressDialog.dismiss()
-                commentTextView.setText("")
-                Toast.makeText(
-                    applicationContext,
-                    "Comment has been published successfully",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else {
-                progressDialog.dismiss()
-                Toast.makeText(
-                    applicationContext,
-                    "Comment has not been published",
-                    Toast.LENGTH_SHORT
-                ).show()
+        commentRef.setValue(commentInfo)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    progressDialog.dismiss()
+                    commentTextView.setText("")
+                    Toast.makeText(
+                        applicationContext,
+                        "Comment has been published successfully",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    val notificationRef = FirebaseDatabase.getInstance().reference
+                        .child("Notifications")
+                        .child(publisherId)
+                        .push()
+                    val notificationMap = hashMapOf<String, Any?>()
+                    notificationMap["id"] = notificationRef.key!!
+                    notificationMap["text"] = "commented on your post"
+                    notificationMap["post_id"] = postId
+                    notificationMap["user_id"] = uid
+                    notificationMap["is_post"] = true
+                    notificationRef.setValue(notificationMap)
+                } else {
+                    progressDialog.dismiss()
+                    Toast.makeText(
+                        applicationContext,
+                        "Comment has not been published",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
-        }
     }
 
 }

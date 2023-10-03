@@ -38,7 +38,7 @@ class SearchFragment : Fragment() {
         }
 
         mUser = ArrayList()
-        userAdapter = context?.let { UserAdapter(it, mUser as ArrayList<User>, true) }
+        userAdapter = context?.let { UserAdapter(it, mUser as ArrayList<User>) }
         recyclerView?.adapter = userAdapter
 
         val searchEditText = binding.searchEditText

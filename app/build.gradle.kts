@@ -66,4 +66,5 @@ dependencies {
 
     implementation("com.theartofdev.edmodo:android-image-cropper:2.8.+")
 
+    implementation("com.github.shts:StoriesProgressView:3.0.0")
 }

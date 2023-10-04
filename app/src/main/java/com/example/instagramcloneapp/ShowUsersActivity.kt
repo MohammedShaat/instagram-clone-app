@@ -1,6 +1,7 @@
 package com.example.instagramcloneapp
 
 import android.os.Bundle
+import android.renderscript.Sampler.Value
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.instagramcloneapp.adapters.UserAdapter
@@ -18,6 +19,7 @@ class ShowUsersActivity : AppCompatActivity() {
     private lateinit var title: String
     private lateinit var postId: String
     private lateinit var profileId: String
+    private lateinit var storyId: String
 
     private val userIdList = mutableListOf<String>()
     private val userList = mutableListOf<User>()
@@ -34,6 +36,7 @@ class ShowUsersActivity : AppCompatActivity() {
             "likes" -> postId = requireNotNull(intent.getStringExtra("postId"))
             "followers" -> profileId = requireNotNull(intent.getStringExtra("profileId"))
             "following" -> profileId = requireNotNull(intent.getStringExtra("profileId"))
+            "views" -> storyId = requireNotNull(intent.getStringExtra("storyId"))
         }
 
         setSupportActionBar(binding.likesToolbar)
@@ -54,6 +57,7 @@ class ShowUsersActivity : AppCompatActivity() {
             "likes" -> getUsersOfLikes()
             "followers" -> getFollowers()
             "following" -> getFollowing()
+            "views" -> getViews()
         }
     }
 
@@ -115,6 +119,22 @@ class ShowUsersActivity : AppCompatActivity() {
             .child("Following")
 
         postRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                userIdList.clear()
+                userIdList.addAll(snapshot.children.map { it.key!! })
+                getUsersInfo()
+            }
+
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
+    private fun getViews() {
+        val storyRef = FirebaseDatabase.getInstance().reference
+            .child("Seen")
+            .child(storyId)
+
+        storyRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 userIdList.clear()
                 userIdList.addAll(snapshot.children.map { it.key!! })

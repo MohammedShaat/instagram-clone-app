@@ -114,7 +114,7 @@ class HomeFragment : Fragment() {
 
                     snapshot.children.forEach { userSnapshot ->
                         val userID = userSnapshot.key!!
-                        if (!(userID in followingList || userID == firebaseUser.uid)) return
+                        if (userID !in followingList) return@forEach
 
                         val activeStorySnapshot =
                             userSnapshot.children.lastOrNull { storySnapshot ->

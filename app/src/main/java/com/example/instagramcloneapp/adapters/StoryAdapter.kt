@@ -1,5 +1,6 @@
 package com.example.instagramcloneapp.adapters
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
@@ -91,13 +92,13 @@ class StoryAdapter(
         }
 
         private fun checkSeenStatus(publisherId: String) {
-            if (firebaseUser.uid == publisherId) {
-                binding.apply {
-                    storyImageSeen.isVisible = true
-                    storyImage.isVisible = false
-                }
-                return
-            }
+//            if (firebaseUser.uid == publisherId) {
+//                binding.apply {
+//                    storyImageSeen.isVisible = true
+//                    storyImage.isVisible = false
+//                }
+//                return
+//            }
 
             val userRef = FirebaseDatabase.getInstance().reference
                 .child("Stories")
@@ -107,16 +108,16 @@ class StoryAdapter(
                 override fun onDataChange(snapshot: DataSnapshot) {
 
                     snapshot.children.forEach { storySnapshot ->
-                        val storyId = storySnapshot.child("id").getValue(String::class.java)!!
+                        val story = storySnapshot.getValue(Story::class.java)!!
 
                         val seenUserRef = FirebaseDatabase.getInstance().reference
                             .child("Seen")
-                            .child(storyId)
+                            .child(story.id)
                             .child(firebaseUser.uid)
 
                         seenUserRef.addValueEventListener(object : ValueEventListener {
                             override fun onDataChange(snapshot: DataSnapshot) {
-                                if (!snapshot.exists()) {
+                                if (!snapshot.exists() && story.timeEnd > System.currentTimeMillis()) {
                                     binding.apply {
                                         storyImage.isVisible = true
                                         storyImageSeen.isVisible = false
@@ -139,11 +140,70 @@ class StoryAdapter(
         fun bind(story: Story) {
             binding.apply {
                 getUserImage(story.userId)
+                checkMyStory()
+
                 root.setOnClickListener {
-                    val intent = Intent(mContext, AddStoryActivity::class.java)
-                    mContext.startActivity(intent)
+                    addOrViewMyStory()
                 }
             }
+        }
+
+        private fun checkMyStory() {
+            val userRef = FirebaseDatabase.getInstance().reference
+                .child("Stories")
+                .child(firebaseUser.uid)
+
+            userRef.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val activeStoriesCount = snapshot.children.count { storySnapshot ->
+                        storySnapshot.getValue(Story::class.java)!!.timeEnd > System.currentTimeMillis()
+                    }
+                    if (activeStoriesCount > 0) {
+                        binding.storyAdd.text = "View story"
+                    } else {
+                        binding.storyAdd.text = "Add story"
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
+        }
+
+        private fun addOrViewMyStory() {
+            val userRef = FirebaseDatabase.getInstance().reference
+                .child("Stories")
+                .child(firebaseUser.uid)
+
+            userRef.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val activeStoriesCount = snapshot.children.count { storySnapshot ->
+                        storySnapshot.getValue(Story::class.java)!!.timeEnd > System.currentTimeMillis()
+                    }
+                    if (activeStoriesCount > 0) {
+                        AlertDialog.Builder(mContext).create().apply {
+                            setButton(AlertDialog.BUTTON_POSITIVE, "View story") { _, _ ->
+                                val intent =
+                                    Intent(mContext, StoryActivity::class.java).apply {
+                                        putExtra("userId", firebaseUser.uid)
+                                    }
+                                mContext.startActivity(intent)
+                                dismiss()
+                            }
+                            setButton(AlertDialog.BUTTON_NEGATIVE, "Add story") { _, _ ->
+                                val intent = Intent(mContext, AddStoryActivity::class.java)
+                                mContext.startActivity(intent)
+                                dismiss()
+                            }
+                            show()
+                        }
+                    } else {
+                        val intent = Intent(mContext, AddStoryActivity::class.java)
+                        mContext.startActivity(intent)
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
         }
 
         private fun getUserImage(userId: String) {

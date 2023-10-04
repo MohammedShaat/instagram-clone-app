@@ -1,7 +1,7 @@
 package com.example.instagramcloneapp
 
+import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.res.Resources
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
@@ -35,6 +35,7 @@ class StoryActivity : AppCompatActivity() {
     private var pressTime = 0L
     private var limit = 500L
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -47,39 +48,6 @@ class StoryActivity : AppCompatActivity() {
         imageStory = binding.imageStory
         storiesProgressView = binding.stories
 
-        storiesProgressView.apply {
-            setStoryDuration(3000)
-            setStoriesListener(object : StoriesProgressView.StoriesListener {
-                override fun onNext() {
-                    activeStoryIndex++
-                    if (activeStoryIndex !in storyList.indices) return
-
-                    seeStory(storyList[activeStoryIndex].id)
-                    getSeenNumber(storyList[activeStoryIndex].id)
-
-                    Picasso.get().load(storyList[activeStoryIndex].imageUrl)
-                        .placeholder(R.drawable.profile)
-                        .into(imageStory)
-                }
-
-                override fun onPrev() {
-                    activeStoryIndex--
-                    if (activeStoryIndex !in storyList.indices) return
-
-                    seeStory(storyList[activeStoryIndex].id)
-                    getSeenNumber(storyList[activeStoryIndex].id)
-
-                    Picasso.get().load(storyList[activeStoryIndex].imageUrl)
-                        .placeholder(R.drawable.profile)
-                        .into(imageStory)
-                }
-
-                override fun onComplete() {
-                    finish()
-                }
-            })
-        }
-
         binding.linearLayoutSeen.isVisible = firebaseUser.uid == userId
         binding.storyDeleteBtn.isVisible = firebaseUser.uid == userId
 
@@ -91,16 +59,17 @@ class StoryActivity : AppCompatActivity() {
                 MotionEvent.ACTION_DOWN -> {
                     pressTime = System.currentTimeMillis()
                     storiesProgressView.pause()
-                    return@OnTouchListener false
+                    false
                 }
 
                 MotionEvent.ACTION_UP -> {
                     pressTime = System.currentTimeMillis() - pressTime
                     storiesProgressView.resume()
-                    return@OnTouchListener limit < pressTime
+                    limit < pressTime
                 }
+
+                else -> false
             }
-            false
         }
 
         binding.reverse.apply {
@@ -150,6 +119,7 @@ class StoryActivity : AppCompatActivity() {
 
         userRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
+                storiesProgressView.pause()
                 storyList.clear()
                 snapshot.children.forEach { storySnapshot ->
                     val story = storySnapshot.getValue(Story::class.java)!!
@@ -170,6 +140,36 @@ class StoryActivity : AppCompatActivity() {
 
                 storiesProgressView.apply {
                     setStoriesCount(storyList.size)
+                    setStoryDuration(3000)
+                    setStoriesListener(object : StoriesProgressView.StoriesListener {
+                        override fun onNext() {
+                            activeStoryIndex++
+                            if (activeStoryIndex !in storyList.indices) return
+
+                            seeStory(storyList[activeStoryIndex].id)
+                            getSeenNumber(storyList[activeStoryIndex].id)
+
+                            Picasso.get().load(storyList[activeStoryIndex].imageUrl)
+                                .placeholder(R.drawable.profile)
+                                .into(imageStory)
+                        }
+
+                        override fun onPrev() {
+                            activeStoryIndex--
+                            if (activeStoryIndex !in storyList.indices) return
+
+                            seeStory(storyList[activeStoryIndex].id)
+                            getSeenNumber(storyList[activeStoryIndex].id)
+
+                            Picasso.get().load(storyList[activeStoryIndex].imageUrl)
+                                .placeholder(R.drawable.profile)
+                                .into(imageStory)
+                        }
+
+                        override fun onComplete() {
+                            finish()
+                        }
+                    })
                     startStories(activeStoryIndex)
                 }
             }
